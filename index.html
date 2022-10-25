@@ -1,0 +1,3060 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hello World</title>
+    <link rel="stylesheet" type="text/css" href="App.css" />  
+    <link rel="stylesheet" type="text/css" href="Checkout.css" />  
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/sweetalert2@7.12.15/dist/sweetalert2.min.css'></link> 
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@7.12.15/dist/sweetalert2.all.min.js"></script>  
+    
+    <!-- Don't use this in production: -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@7.12.15/dist/sweetalert2.all.min.js"></script>  
+    <script type="text/babel">
+    
+    class MyApp extends React.Component {
+  state = {
+    show: false,
+
+    baseURL:'http://127.0.0.1:8000/',
+    app_key:'?store_id=1&website=3fca26bf0e1d0898135f2d3ccb4c987a&api_key=d0ffee856e7ac3aa17e29172487ab16d',
+    website:'3fca26bf0e1d0898135f2d3ccb4c987a',
+    api_key:'d0ffee856e7ac3aa17e29172487ab16d'
+  };
+ 
+  close = () => {
+    this.setState({ show: false });
+  };
+  render() {
+    let { show,baseURL,app_key,website,api_key } = this.state;
+
+    return (
+      <>
+        <div style={{ zIndex: "1" }}>
+          
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "end",
+              marginRight: "15.5%",
+              marginTop: "2%",
+              marginBottom: "1%",
+            }}
+          >
+            <button
+              style={{
+                background: "#faebd7",
+                padding: "5px",
+                fontSize: "20px",
+                fontWeight: "700",
+                borderRadius: "5px",
+              }}
+              onClick={() => {
+                this.setState({ show: true });
+              }}
+            >
+              <img src="cart.svg" style={{ width: "25px" }} />
+              Your Cart
+            </button>
+          </div>
+          {show && <Cart close={this.close} baseURL={baseURL} app_key={app_key} website={website} api_key={api_key}/>}
+        </div>
+      </>
+    );
+  }
+}
+
+class Cart extends React.Component {
+    state = {
+      cartItem: [],
+      totalAmount: "",
+      isHover: false,
+      showLoader: false,
+      showModal: false,
+      isMobileView:false,
+      
+    };
+    componentDidMount() {
+      this.getWindowSize();
+      this.getCartDetail();
+    }
+    getWindowSize() {
+  const {innerWidth, innerHeight} = window;
+  
+  return {innerWidth, innerHeight};
+}
+    async getCartDetail() {
+      let {baseURL, app_key}=this.props;
+      await fetch(
+        `${baseURL}getCartDetails${app_key}&customer_id=2`
+      )
+        .then((res) => res.json())
+        .then(
+          (result) => {
+            
+            this.setState({
+              cartItem: result.cart,
+              totalAmount: result.cartTotalAmount,
+            });
+          },
+          (error) => {
+            console.log(error);
+          }
+        );
+    }
+    handleMouseEnter = () => {
+      this.setState({ isHover: true });
+    };
+  
+    RemoveItem = (product_ID) => {
+      let {baseURL, app_key,website,api_key}=this.props;
+      const Url = `${baseURL}removeProductFromCart${app_key}`;
+      const postBody = {
+        customer_id: "2",
+        product_id: product_ID,
+        action: "remove_product",
+        store_id: "1",
+        website: `${website}`,
+        api_key: `${api_key}`,
+      };
+      const requestMetadata = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(postBody),
+      };
+  
+      fetch(Url, requestMetadata)
+        .then((res) => res.json())
+        .then((res) => this.getCartDetail())
+        
+    };
+    addQuantity = (id) => {
+      let {baseURL, app_key,website,api_key}=this.props;
+      const Url = `${baseURL}removeProductFromCart${app_key}`;
+      const postBody = {
+        customer_id: "2",
+        product_id: id,
+        action: "add_quantity",
+        store_id: "1",
+        website: `${website}`,
+        api_key: `${api_key}`,
+      };
+      const requestMetadata = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(postBody),
+      };
+  
+      fetch(Url, requestMetadata)
+        .then((res) => res.json())
+        .then((res) => this.getCartDetail())
+        
+    };
+    subQuantity = (id) => {
+      let {baseURL, app_key,website,api_key}=this.props;
+      const Url = `${baseURL}removeProductFromCart${app_key}`;
+      const postBody = {
+        customer_id: "2",
+        product_id: id,
+        action: "sub_quantity",
+        store_id: "1",
+        website: `${website}`,
+        api_key: `${api_key}`,
+      };
+      const requestMetadata = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(postBody),
+      };
+  
+      fetch(Url, requestMetadata)
+        .then((res) => res.json())
+        .then((res) => this.getCartDetail())
+        
+    };
+    handleCheckout = (event) => {
+      
+      event.preventDefault();
+  
+      this.setState({ showLoader: true });
+      setTimeout(() => {
+        this.setState({ showLoader: false, showModal: true });
+      }, 100);
+    };
+    close = (e) => {
+      e.preventDefault();
+      this.setState({ showModal: false });
+    };
+    render() {
+      let { cartItem, totalAmount, showLoader, isHover, showModal } = this.state;
+      let {baseURL, app_key,website,api_key}=this.props;
+      return (
+        <>
+        {showModal && <CheckOutModal close={(e) => this.close(e)} baseURL={baseURL} app_key={app_key} website={website} api_key={api_key} />}
+          <div className="pageOverlay"></div>
+  
+          <div className="drawer drawer--fromRight" id="sidebar-cart">
+            <div
+              className="new-pm__header"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "24px",
+                padding: "10px",
+                position: "relative",
+                zIndex: "1",
+                borderBottom: "1px solid #dadde2",
+                alignItems:'center'
+              }}
+            >
+              <span
+                style={{
+                  letterSpacing: "4.5px",
+                  color: "#000",
+                  fontFamily: "revert",
+                  fontWeight: "300",
+                }}
+              >
+                CART
+              </span>
+              <button
+                onClick={this.props.close}
+                style={{ border: "none", background: "white" }}
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M18 6L6 18"
+                    stroke="#241C3C"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M6 6L18 18"
+                    stroke="#241C3C"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+  
+            <div className="coupon_holder">
+              <div className="coupon_item_holder">
+                <div className="coupon_item">
+                  <div style={{fontWeight:'600',fontSize:'15px', marginTop:'6px'}}>Upto 25% off</div>
+                  <p style={{marginTop:'10px'}}>No discount codes needed.</p>
+                </div>
+                <div className="coupon_item">
+                  <div style={{fontWeight:'600',fontSize:'15px', marginTop:'6px'}}>FREE DELIVERY</div>
+                  <div style={{fontWeight:'600',fontSize:'15px', marginTop:'6px'}}>FREE EXCHANGES </div>
+                  <div style={{fontWeight:'600',fontSize:'15px', marginTop:'6px'}}>EASY RETURNS</div>
+                  <p></p>
+                </div>
+                
+              </div>
+              <p className="cpn_note">
+                  <strong>Note: </strong>
+                  You have saved a lot!
+                </p>
+            </div>
+            <form className="Cart Drawer__Content">
+              <div className="Drawer__Main">
+                <div className="Drawer__Container">
+                  <div className="Cart__ItemList">
+                    {cartItem.map((n) => {
+                      return (
+                        <div className="CartItemWrapper" key={n.pid}>
+                          <div className="CartItem">
+                            <div
+                              className="CartItem__ImageWrapper"
+                              style={{ marginTop: "1%" }}
+                            >
+                              <div className="AspectRatio">
+                                <img src='https://cdn.shopify.com/s/files/1/2428/5565/products/Neemans-EbonyBlack-Tree-Sneakers-FrontLeftLogo-Comfortable-Shoes_240x.jpg?v=1657202741' />
+                              </div>
+                            </div>
+                            <div className="CartItem__Info">
+                              <h2 className="CartItem__Title Heading">
+                                <a>{n.pname}</a>
+                              </h2>
+                              <div className="CartItem_Meta Heading Text--subdued">
+                                <div className="CartItem__PriceList">
+                                  <span>{n.price ? "Rs. " + n.price : ""}</span>
+                                  <strike>{n.mrp ? n.mrp : ""}</strike>
+                                  <span className="discount__cart">
+                                    {n.discount ? "Save" + n.discount : ""}
+                                  </span>
+                                </div>
+                                <p className="cart-item__variant-title">
+                                  {n.color ? "Color:" + n.color : ""}
+                                </p>
+                                <p className="cart-item__variant-title">
+                                  {n.size ? "Size:" + n.size : ""}
+                                </p>
+                              </div>
+                              <div
+                                className="CartItem__Actions"
+                                style={{
+                                  textAllign: "center",
+                                  display: "flex",
+                                  alignItems: "center",
+                                }}
+                              >
+                                <div className="CartItem__QuantitySelector">
+                                  <div className="QuantitySelector">
+                                    <div className="QuantitySelector__Button">
+                                      <img
+                                        onClick={() => this.subQuantity(n.pid)}
+                                        src="minus.svg"
+                                        style={{ width: "10px" }}
+                                      />
+                                    </div>
+                                    <input
+                                      type="text"
+                                      className="QuantitySelector__CurrentQuantity"
+                                      pattern="[0-9]"
+                                      value={n.quantity}
+                                    />
+                                    <div className="QuantitySelector__Button">
+                                      <img
+                                        onClick={() => this.addQuantity(n.pid)}
+                                        src="plus.svg"
+                                        style={{ width: "10px" }}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="CartItem__Remove">
+                                  <div
+                                    style={{
+                                      borderBottom: "1px solid",
+                                      cursor: "pointer",
+                                    }}
+                                    onClick={() => this.RemoveItem(n.pid)}
+                                  >
+                                    REMOVE
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              <div className="Drawer__footer">
+                <p className="Cart__Taxes Text--subdued">
+                  Shipping & taxes calculated at checkout{" "}
+                </p>
+                <p className="price-text">
+                  Subtotal:
+                  <span className="wh-original-price">Rs. {totalAmount}</span>
+                </p>
+                <div className="gokwik-checkout">
+                  <button
+                    style={showLoader && isHover ? { background: "black" } : {}}
+                    onMouseEnter={this.handleMouseEnter}
+                    onClick={(e) => {
+                      this.handleCheckout(e);
+                    }}
+                  >
+                    {showLoader ? (
+                      <LoadingSpinner />
+                    ) : (
+                      <div style={{ width: "100%", display: "flex", margin:'1% 0' }}>
+                        <div className="btn-text">
+                          <div className="btn-text_labelPay">PAY VIA UPI / COD</div>
+                          <div className="btn-text_labelDiscount">
+                            Extra 5% off on UPI
+                          </div>
+                        </div>
+                        <div
+                          className="pay-opt-icon"
+                          style={{ padding: "0 14px",display:'flex', alignItems:'center'}}
+                        >
+                          <img className='btn-text-logo'
+                            src="https://cdn.gokwik.co/v4/images/upi-icons.svg"
+                          />
+                          <img className='btn-text-arrow'
+                            src="https://cdn.gokwik.co/v4/images/right-arrow.svg"
+                            style={{ width: "14px", marginLeft: "15px" }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </>
+      );
+    }
+  }
+  function LoadingSpinner() {
+  return (
+    <div className="spinner-container">
+      <div className="loading-spinner"></div>
+    </div>
+  );
+}
+function LoadingBlackSpinner() {
+  return (
+    <div className="spinner-container">
+      <div className="loading-spinner" style={{borderTop: '0.5em solid',
+    borderRight: '0.5em solid',
+    borderBottom: '0.5em solid rgba(255,255,255,0.2)',
+    borderLeft: '0.5em solid #ffffff'}}></div>
+    </div>
+  );
+}
+class CheckOutModal extends React.Component {
+  state = {
+    continueBtn: false,
+    cartItem: [],
+    totalAmount: null,
+    showSummaryDetail: true,
+    showMobileSummaryDetail:false,
+    mobileNumber: "",
+    showLoader: false,
+    mobileVerification: false,
+    addressVerificatin: false,
+    mobileOTPpage: false,
+    otp: ["", "", "", ""],
+    currentPage: "mobile",
+    pincode: "",
+    city: "",
+    state: "",
+    fullAddress: "",
+    fullName: "",
+    selectedAddressType: "",
+    email: "",
+    address: {
+      pincode: "",
+      city: "",
+      state: "",
+      fullAddress: "",
+      fullName: "",
+      selectedAddressType: "",
+      email: "",
+    },
+    currentDefaultAddress:false,
+    stepMobileVerification: false,
+    stepAddressVerification: false,
+    existingUser: true,
+    newUser: { name: "", email: "" },
+    userOTP: "",
+    user_id: "",
+    addressList: [],
+    selectedAddress: "",
+    errors: { otp: "" },
+    addNewAddress: false,
+    editAddress: false,
+    address_id: "",
+    progress: "",
+    defaultAddress: [],
+    secondLeft:30,
+    showMessage:false,
+    message:'',
+    showDefaultCheckBox:true,
+  };
+  componentDidMount() {
+    this.getCartDetail();
+  }
+  async componentDidUpdate(prevProps, prevState) {
+    if (this.state.otp !== prevState.otp) {
+      this.disableLoader();
+      if (this.state.otp.length === 4) {
+        if (this.state.otp == this.state.userOTP) {
+          this.setState({
+            mobileOTPpage: false,
+            currentPage: "address",
+            showLoader: true,
+            stepMobileVerification: true,
+          });
+        }
+      }
+    }
+  }
+  async getCartDetail() {
+    let {baseURL, app_key,website,api_key}=this.props;
+    await fetch(
+      `${baseURL}getCartDetails${app_key}&customer_id=2`
+    )
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          this.setState({
+            cartItem: result.cart,
+            totalAmount: result.cartTotalAmount,
+          });
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
+  }
+  showSummary = (e) => {
+    e.preventDefault();
+    let { showSummaryDetail } = this.state;
+    this.setState({ showSummaryDetail: !showSummaryDetail });
+  };
+  showMobileSummary = (e) => {
+    e.preventDefault();
+    let { showMobileSummaryDetail } = this.state;
+    this.setState({ showMobileSummaryDetail: !showMobileSummaryDetail });
+  };
+  disableLoader = () => {
+    setTimeout(() => {
+      this.setState({ showLoader: false });
+    }, 4000);
+  };
+  disableMessage = () => {
+    setTimeout(() => {
+      this.setState({ showMessage:false });
+    }, 2000);
+  };
+  handleContinue = (e) => {
+    e.preventDefault();
+    let {
+      continueBtn,
+      currentPage,
+      mobileNumber,
+      newUser,
+      existingUser,
+      mobileOTPpage,
+      address,
+      addNewAddress,
+      editAddress,
+      currentDefaultAddress
+    } = this.state;
+    let {baseURL, app_key,website,api_key}=this.props;
+    
+    if (currentPage == "address" && e.target.name == "addNewAddress") {
+      this.setState({showLoader:true});
+      const Url = `${baseURL}addAddress${app_key}`;
+      const postBody = {
+        customer_id: this.state.user_id,
+        name: address.fullName,
+        mobile: mobileNumber,
+        address1: address.fullAddress,
+        city: address.city,
+        state: address.state,
+        country: "India",
+        pin: address.pincode,
+        default:currentDefaultAddress ? 1 : 0,
+        store_id: "1",
+        website: `${website}`,
+        api_key: `${api_key}`,
+      };
+      const requestMetadata = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(postBody),
+      };
+
+      fetch(Url, requestMetadata)
+        .then((res) => res.json())
+        .then((res) => {
+          this.setState({
+            addNewAddress: false,
+            continueBtn: false,
+            selectedAddress: "",
+            showMessage:true,
+            message:'New address has been added.',
+            currentDefaultAddress:false
+          });
+          this.getAddress();
+          this.disableMessage();
+        });
+    }
+    if (currentPage == "address" && e.target.name == "save") {
+      const Url = `${baseURL}updateAddress${app_key}`;
+      this.setState({showLoader:true});
+      const postBody = {
+        address_id: address.address_id,
+        customer_id: this.state.user_id,
+        name: address.fullName,
+        mobile: mobileNumber,
+        address1: address.fullAddress,
+        city: address.city,
+        state: address.state,
+        country: "India",
+        pin: address.pincode,
+        default:currentDefaultAddress ? 1 : 0,
+        store_id: "1",
+        website: `${website}`,
+        api_key: `${api_key}`,
+      };
+      const requestMetadata = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(postBody),
+      };
+
+      fetch(Url, requestMetadata)
+        .then((res) => res.json())
+        .then((res) => {
+          this.setState({
+            editAddress: false,
+            continueBtn: false,
+            selectedAddress: "",
+            showMessage:true,
+            message:'Address has been edited successfully.',
+            currentDefaultAddress:false
+          });
+          this.getAddress();
+          this.disableMessage();
+        });
+    }
+    if (currentPage == "address" && e.target.name == "continue") {
+      this.setState({
+        currentPage: "pay",
+        stepAddressVerification: true,
+        progress: "0.66",
+      });
+    }
+    if (currentPage == "mobile" && !existingUser && mobileOTPpage) {
+      let { errors, newUser } = this.state;
+
+      this.setState({ errors });
+      const Url = `${baseURL}createUser${app_key}`;
+      const postBody = {
+        customer_name: newUser.name,
+        mobile: mobileNumber,
+        email_id: newUser.email,
+        store_id: "1",
+        website: `${website}`,
+        api_key: `${api_key}`,
+      };
+      const requestMetadata = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(postBody),
+      };
+
+      fetch(Url, requestMetadata)
+        .then((res) => res.json())
+        .then((res) => {
+          this.setState({ existingUser: true, addNewAddress: true });
+          this.getOTP(mobileNumber);
+        });
+    }
+  };
+  async getState(e) {
+    let { address } = this.state;
+    let {baseURL, app_key,website,api_key}=this.props;
+    const Url = `${baseURL}getCityAndState${app_key}&pincode=${e.target.value}`;
+ 
+    const postBody = {
+      pincode:e.target.value,
+    "store_id" : "1",
+    website: `${website}`,
+      api_key: `${api_key}`,
+    };
+    const requestMetadata = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(postBody),
+    };
+
+    await fetch(Url)
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.PostOffice[0]) {
+          address.state = result.PostOffice[0].State;
+          address.city = result.PostOffice[0].District;
+          this.setState({
+            address,
+          });
+        }
+      });
+  }
+  async getOTP(mobile) {
+    let {baseURL, app_key,website,api_key}=this.props;
+    const Url = `${baseURL}checkUserExistence${app_key}`;
+    const postBody = {
+      mobile: mobile,
+      store_id: "1",
+      website: `${website}`,
+      api_key: `${api_key}`,
+    };
+    const requestMetadata = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(postBody),
+    };
+
+    await fetch(Url, requestMetadata)
+      .then((res) => res.json())
+      .then((res) => {
+        
+        if (res.status == 404) this.setState({ existingUser: false });
+        else {
+          this.setState({ user_id: res.user.customer_id });
+          setInterval(() => {
+       this.state.secondLeft && this.setState({ secondLeft: this.state.secondLeft-1});
+    }, 1000);  
+        }
+        this.setState({
+          mobileOTPpage: true,
+          showLoader: false,
+          userOTP: res.currentOtp,
+        });
+      });
+      
+      
+  }
+  handleNewUserChange = (e, type) => {
+    let { newUser } = this.state;
+    if (type == "name") {
+      newUser.name = e.target.value;
+    } else {
+      newUser.email = e.target.value;
+    }
+    this.setState({ newUser });
+  };
+  handleAddress = (e, type) => {
+    let { address } = this.state;
+    if (type == "pincode") {
+      
+      address.pincode = e.target.value;
+      if (e.target.value.length === 6) {
+        this.getState(e);
+        this.setState({
+          showLoader: true,
+          continueBtn: true,
+        });
+        this.disableLoader();
+      }
+    }
+    if (type === "city") {
+      address.city = e.target.value;
+    }
+    if (type === "fullName") {
+      address.fullName = e.target.value;
+    }
+    if (type === "email") {
+      address.email = e.target.value;
+    }
+    if (type === "fullAddress") {
+      address.fullAddress = e.target.value;
+    }
+    if (type === "addressType") {
+      
+      address.selectedAddressType = e.target.value;
+    }
+    this.setState({ address });
+  };
+  handleSelectedAddress = (e) => {
+    this.setState({ selectedAddress: e.target.value });
+    
+  };
+  handleMakeDefaultAddress = (e, address_id) => {
+    let {baseURL, app_key,website,api_key}=this.props;
+    e.preventDefault();
+    this.setState({showLoader:true});
+    const Url = `${baseURL}makeAddressDefault/${address_id}`;
+    const postBody = {
+      customer_id: this.state.user_id,
+      store_id: "1",
+      website: `${website}`,
+      api_key: `${api_key}`,
+    };
+    const requestMetadata = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(postBody),
+    };
+
+    fetch(Url, requestMetadata)
+      .then((res) => res.json())
+      .then((res) => {
+        this.setState({message:'Default address is successfully changed.', showMessage:true})
+        this.getAddress();
+        this.disableMessage();
+      });
+  };
+  handleDeleteAddress = (e, address_id) => {
+    let {baseURL, app_key,website,api_key}=this.props;
+    e.preventDefault();
+    swal({
+  title: 'Do you want to delete this address?',
+  text: "You won't be able to revert this!",
+  icon: 'warning',
+  showCancelButton: true,
+  confirmButtonColor: '#3085d6',
+  cancelButtonColor: '#d33',
+}).then((result) => {
+  console.log(result);
+  if (result.value) {
+    const Url = `${baseURL}deleteAddress/${address_id}`;
+      const postBody = {
+        customer_id: this.state.user_id,
+        store_id: "1",
+        website: `${website}`,
+        api_key: `${api_key}`,
+      };
+      const requestMetadata = {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(postBody),
+      };
+
+      fetch(Url, requestMetadata)
+        .then((res) => res.json())
+        .then((res) => {
+         
+          this.getAddress();
+        });
+  }
+})
+  };
+  handleEditAddress = (e, addressDetail) => {
+    let { address } = this.state;
+    address.address_id = addressDetail.address_id;
+    address.fullName = addressDetail.name;
+    address.pincode = addressDetail.pin;
+    address.email = addressDetail.email;
+    address.city = addressDetail.city;
+    address.fullAddress = addressDetail.address1;
+    address.state = addressDetail.state;
+    if(addressDetail.default_address)
+      this.setState({showDefaultCheckBox:false});
+    else this.setState({showDefaultCheckBox:true})
+    address.default=addressDetail.default_address;   
+    this.setState({ editAddress: true, continueBtn: true });
+    this.setState({ address });
+  };
+  getAddress = () => {
+    let {defaultAddress, addNewAddress,editAddress}=this.state;
+    let {baseURL, app_key,website,api_key}=this.props;
+    fetch(
+      `${baseURL}fetchAllAddress${app_key}&customer_id=${this.state.user_id}`
+    )
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          let defaultAddress = result.addresses.filter(
+            (n) => n.default_address == 1
+          );
+          let address = result.addresses.filter((n) => n.default_address == 0);
+          
+          if (defaultAddress.length)
+            this.setState({
+              addressList: address,
+              selectedAddress: defaultAddress[0].address_id,
+              continueBtn: true,
+              mobileOTPpage: false,
+              currentPage: "address",
+              stepMobileVerification: true,
+              defaultAddress: defaultAddress,
+              showLoader:false
+              
+            });
+          else {
+            this.setState({
+              showLoader:false,
+              addNewAddress: true,
+              addressList: result.addresses,
+              mobileOTPpage: false,
+              currentPage: "address",
+                stepMobileVerification: true,
+              defaultAddress: defaultAddress,
+              
+            });
+          }
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
+  };
+  handleOTPChange = (e, index) => {
+    if (isNaN(e.value)) return false;
+    let { otp } = this.state;
+    otp[index] = e.value;
+    this.setState({ otp });
+    if (e.nextSibling) {
+      e.nextSibling.focus();
+    } else {
+      if (this.state.otp.join("") == this.state.userOTP) {
+        this.setState({ progress: "0.33" });
+        this.getAddress();
+      } else {
+        let { errors } = this.state;
+        errors.otp = "Please enter correct OTP";
+        this.setState({ errors });
+      }
+    }
+  };
+  handleDefaultAddress=(e)=>{
+    e.preventDefault();
+    //e.stopPropagation() ;
+     this.setState({currentDefaultAddress:!this.state.currentDefaultAddress});
+  }
+  render() {
+    let {
+      newUser,
+      continueBtn,
+      cartItem,
+      totalAmount,
+      showSummaryDetail,
+      mobileNumber,
+      showLoader,
+      mobileOTPpage,
+      otp,
+      currentPage,
+      currentDefaultAddress,
+      pincode,
+      city,
+      addressList,
+      stepAddressVerification,
+      stepMobileVerification,
+      existingUser,
+      address,
+      selectedAddress,
+      errors,
+      addNewAddress,
+      editAddress,
+      progress,
+      defaultAddress,
+      secondLeft,
+      showMessage,
+      message,
+      showMobileSummaryDetail, 
+      showDefaultCheckBox
+    } = this.state;
+    let mobileView=false;
+if(window.innerWidth < 767){
+   mobileView=true;
+}
+    return (
+     
+      <div>
+        <div className="ModalOverlay"></div>
+        {mobileView ? 
+          <div className='mobile-view-page-wrap'>
+            <header className="mobile-user-detail__header">
+              <div className="mobile-user-detail__header-back-icon" onClick={this.props.close}> <img
+                            src="https://pdp.gokwik.co/assets/icons/bac.svg"
+                            alt=""
+                          /></div>
+              <div className="mobile-merchant-logo">
+                <img src="https://d1yvcml1qpeqwy.cloudfront.net/new-site/images/logo-2.png" />
+              </div>
+            </header>
+            <div className="gk-content">
+              <div className="steps">
+                <div className="steps_inner">
+                  <div className={progress === "0.33" || progress==="0.66"    ? "steps_inner_mobile_verified":'steps_inner_mobile'}>
+                    <div
+                      className="info_wrap"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        this.setState({
+                          mobileOTPpage: false,
+                          currentPage: "mobile",
+                          stepMobileVerification: false,
+                          stepAddressVerification: false,
+                          continueBtn: false,
+                          mobileVerification: false,
+                          addressVerificatin: false,
+                          mobileOTPpage: false,
+                          otp: ["", "", "", ""],
+                          address: {
+                            pincode: "",
+                            city: "",
+                            state: "",
+                            fullAddress: "",
+                            fullName: "",
+                            selectedAddressType: "",
+                            email: "",
+                          },
+                          existingUser: true,
+                          newUser: { name: "", email: "" },
+                          userOTP: "",
+                          user_id: "",
+                          addressList: [],
+                          selectedAddress: "",
+                          errors: { otp: "" },
+                          addNewAddress: false,
+                          editAddress: false,
+                          address_id: "",
+                          progress: ".00",
+                          mobileNumber: "",
+                        });
+                      }}
+                    >
+                      <span
+                        className="circle-box"
+                        style={
+                          stepMobileVerification
+                            ? { border: "2px solid green" }
+                            : { border: "2px solid" , alignItems:'center' }
+                        }
+                      >
+                        {stepMobileVerification ? (
+                          <img
+                          style={{width:'15px', height:'22px'}}
+                            src="https://pdp.gokwik.co/assets/icons/green-check.svg"
+                            alt=""
+                          />
+                        ) : (
+                          1
+                        )}
+                      </span>
+                      <div
+                        className="title"
+                        style={
+                          stepMobileVerification
+                            ? { color: "green" }
+                            : { color: "#000" }
+                        }
+                      >
+                        Mobile
+                      </div>
+                    </div>
+                  </div>
+                  <div className={progress === "0.66" ? "steps_inner_address_verified":'steps_inner_address'}>
+                    <div
+                      className="info_wrap"
+                      style={
+                        stepAddressVerification
+                          ? { cursor: "pointer" }
+                          : { cursor: "text" }
+                      }
+                      onClick={
+                        stepAddressVerification
+                          ? (e) => {
+                              this.setState({
+                                currentPage: "address",
+                                stepAddressVerification: false,
+                                progress: "0.33",
+                              });
+                            }
+                          : ""
+                      }
+                    >
+                      <span
+                        className="circle-box"
+                        style={
+                          currentPage == "address"
+                            ? { border: "2px solid black",alignItems:'center' }
+                            : stepAddressVerification
+                            ? { border: "2px solid green " }
+                            : { background: "#ededed", color: "#c9c9c9",alignItems:'center' }
+                        }
+                      >
+                        {stepAddressVerification ? (
+                          <img
+                          style={{width:'15px', height:'22px'}}
+                            src="https://pdp.gokwik.co/assets/icons/green-check.svg"
+                            alt=""
+                          />
+                        ) : (
+                          2
+                        )}
+                      </span>
+                      <div
+                        className="title"
+                        style={
+                          currentPage == "address"
+                            ? { color: "#000" }
+                            : stepAddressVerification
+                            ? { color: "green" }
+                            : { color: "#c9c9c9" }
+                        }
+                      >
+                        Address
+                      </div>
+                    </div>
+                  </div>
+                  <div className="steps_inner_pay">
+                    <div className="info_wrap">
+                      <span
+                        className="circle-box"
+                        style={
+                          currentPage == "pay"
+                            ? { border: "2px solid black" }
+                            : { background: "#ededed", color: "#c9c9c9" ,alignItems:'center'}
+                        }
+                      >
+                        3
+                      </span>
+                      <div
+                        className="title"
+                        style={
+                          currentPage == "pay"
+                            ? { color: "#000" }
+                            : { color: "#c9c9c9" }
+                        }
+                      >
+                        Pay
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                </div>
+              <div style={{overflowY:'auto',maxHeight:'600px',}}>
+              
+                <div className="cart-wrap">
+              <div className="cart-wrap-scroller" style={{padding:'0'}}>
+
+                <div className="cart-wrap-inner">
+                  <div className="summary">
+                    <div className="order-summary-container" style={{padding:'0'}}>
+                      <div
+                        className="summary-title"
+                        style={{padding:'0'}}
+                        onClick={(e) => this.showMobileSummary(e)}
+                      >
+                      <div style={{display:'flex', justifyContent:'space-between',alignItems:'center',width:'100%'}}>
+                        <div className="summary-title-inner">
+                          <img
+                            src="https://pdp.gokwik.co/assets/icons/cart.svg"
+                            style={{
+                              width: "23px",
+                              height: "auto",
+                              verticalAlign: "middle",
+                            }}
+                          />
+                          <h4 style={{fontSize:'17px',marginLeft:'5px'}}
+
+                          >
+                            Order Summary
+                          </h4>
+                          <img
+                            src="https://img.icons8.com/ios/344/expand-arrow--v2.png"
+                            style={
+                              showMobileSummaryDetail
+                                ? { marginLeft: "10px", width: "13px" }
+                                : {
+                                    transform: "rotate(180deg)",
+                                    marginLeft: "10px",
+                                    width: "10px",
+                                  }
+                            }
+                          />
+                        </div>
+                        <div>
+                          <span style={{fontSize:'20px'}}>{"₹" + totalAmount}</span>
+                        </div>
+                        </div>
+                      </div>
+                      {showMobileSummaryDetail ? (
+                        <div className="order-summary-wrapper">
+                          <div className="cart-product">
+                            <div className="cart-product-detail">
+                              <ul class="cart-product-list" style={{paddingLeft:'0'}}>
+                                {cartItem.map((n) => {
+                                  return (
+                                    <li>
+                                      <div className="product-img" style={{width:'150px'}}>
+                                        <img style={{width:'100%'}} src='https://cdn.shopify.com/s/files/1/2428/5565/products/Neemans-EbonyBlack-Tree-Sneakers-FrontLeftLogo-Comfortable-Shoes_240x.jpg?v=1657202741' />
+                                      </div>
+                                      <div className="product-details" >
+                                        <div className="product-title" style={{fontSize:'20px'}}>
+                                          {n.pname}
+                                        </div>
+                                        <div className="product-quantity" style={{fontSize:'17px', marginTop:'10px'}}>
+                                          Quantity{": " + n.quantity}
+                                        </div>
+                                        <div className="product-price" style={{fontSize:'17px', marginTop:'10px'}}>
+                                          Price{": ₹" + n.price}
+                                        </div>
+                                      </div>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          </div>
+                          <div className="order-summary">
+                            <div className="order-summary-details">
+                              <ul className="price-summary">
+                                <li className="subtotal" style={{fontSize:'18px'}}>
+                                  <span>Subtotal</span>
+                                  <span>{"₹" + totalAmount}</span>
+                                </li>
+                                <li className="coupon-discount" style={{fontSize:'18px'}}>
+                                  <span>Coupon Discount</span>
+                                  <span>-₹0.00</span>
+                                </li>
+                                <li className="prepaid-discount" style={{fontSize:'18px'}}>
+                                  <span>Prepaid Discount</span>
+                                  <span>-₹0.00</span>
+                                </li>
+                                <li className="shipping" style={{fontSize:'18px'}}>
+                                  <span>Shipping</span>
+                                  <span>To be calculated</span>
+                                </li>
+                                <li className="topay" style={{paddingTop:'1rem'}}>
+                                  <span>To Pay</span>
+                                  <span>{"₹" + totalAmount}</span>
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        ""
+                      )}
+                    </div>
+                    {currentPage== 'pay' &&
+                    <div className="discounts">
+                      <div className="discount-coupon">
+                        <div className="discount-coupon-inner">
+                          <img
+                            src="https://pdp.gokwik.co/assets/icons/coupon-discount.svg"
+                            style={{
+                              
+                              width: "40px",
+                              height: "auto",
+                              verticalAlign: "middle",
+                              marginTop: "37px",
+                            }}
+                          />
+                          <div className="discount-box" style={{height:'30px'}}>
+                            <input
+                              type="text"
+                              name="discount"
+                              required
+                              maxLength="64"
+                              style={{fontSize:'20px'}}
+                              placeholder=" "
+                              className="discount-coupon-input"
+                            />
+                            <label
+                              for="discount"
+                              style={{top:'25%'}}
+                              className="discount-coupon-text"
+                            >
+                              You have SAVED a lot, Congrats!
+                            </label>
+                            <div className="apply-coupon">
+                              <div className="coupon-wrap"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>}
+
+                  </div>
+                </div>
+              </div>
+            </div>
+            {currentPage === "pay" && (
+                <div className="payment-options-wrapper">
+                  <div className="payment-options">
+                    <div className="payment-title">
+                      <span>
+                        Please select payment method to complete the order
+                      </span>
+                      <span style={{display:'flex', justifyContent:'center'}}>Additional 7% discount on UPI</span>
+                    </div>
+                    <button className="option-button">
+                      <section className="upi-badge">
+                        <div className="amount-wrapper">
+                          <span className="price-text">₹{totalAmount}</span>
+                          <span className="discount-badge">
+                            Get 7% discount
+                          </span>
+                        </div>
+                        <span className="payViaUpi-btn-label">Pay via UPI</span>
+                      </section>
+                      <section>
+                        <img
+                          src="https://cdn.gokwik.co/v4/images/upi-icons.svg"
+                          style={{ width: "75px" }}
+                        />
+                        <img
+                          src="https://cdn.gokwik.co/v4/images/right-arrow.svg"
+                          style={{ width: "11px", marginLeft: "10px" }}
+                        />
+                      </section>
+                    </button>
+                    <button
+                      className="option-button-cod"
+                      style={{ cursor: "not-allowed" }}
+                    >
+                      <section className="cod-badge">
+                        <div className="amount-wrapper">
+                          <span className="price-text">₹{totalAmount}</span>
+                        </div>
+                        <span>Cash On Delivery</span>
+                      </section>
+                      <section className="">
+                        <img src="https://pdp.gokwik.co/assets/icons/cod.svg" />
+                        <img src="https://pdp.gokwik.co/assets/icons/right-arrow.svg" />
+                      </section>
+                    </button>
+                    <div className="error_wrap">
+                      <span className="text-error">
+                        CoD is not available for the product in your cart.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {currentPage === "address" &&
+                (defaultAddress.length && !addNewAddress && !editAddress ? (
+                  <div className="address-listing">
+                    <div className="address-listing-wrap">
+                      {showMessage &&<div style={{display:'flex', justifyContent:'center', color:'green', fontWeight:'600', fontSize:'16px'}}>{message}</div>}
+                      <div className="address-listing-inner">
+                        {defaultAddress[0] ? (
+                          <div>
+                            <p>Default Address</p>
+                          </div>
+                        ) : (
+                          ""
+                        )}
+                      </div>
+                      {defaultAddress[0] ? (
+                        <div className="add-list">
+                          <div
+                            className="address-card"
+                            style={
+                              selectedAddress == defaultAddress[0].address_id
+                                ? { border: "1px solid" }
+                                : { border: "1px solid rgb(220, 220, 220)" }
+                            }
+                            onChange={(e) => {
+                              this.handleSelectedAddress(e);
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              id={
+                                defaultAddress[0]
+                                  ? defaultAddress[0].address_id
+                                  : ""
+                              }
+                              name="input-type"
+                              value={
+                                defaultAddress[0]
+                                  ? defaultAddress[0].address_id
+                                  : ""
+                              }
+                              style={{ width: "30px", height: "20px" }}
+                              checked={
+                                selectedAddress == defaultAddress[0].address_id
+                              }
+                            />
+                            <label
+                              for={
+                                defaultAddress[0]
+                                  ? defaultAddress[0].address_id
+                                  : ""
+                              }
+                            >
+                              <div>
+                                {defaultAddress[0]
+                                  ? defaultAddress[0].name
+                                  : ""}
+                              </div>
+                              <p style={{marginBottom:'30px', marginTop:'5px', fontSize:'18px'}}>
+                                {defaultAddress[0]
+                                  ? defaultAddress[0].address1
+                                  : ""}
+                              </p>
+                            </label>
+                            <div>
+                              <div className="default-btn">
+                                <button
+                                  style={{
+                                    background: "#a6a6a6",
+                                    cursor: "not-allowed",
+                                  }}
+                                >
+                                  Default
+                                </button>
+                              </div>
+                              <div className="edit-address">
+                                <img
+                                  style={{ width: "20px", cursor: "pointer" }}
+                                  src="https://pdp.gokwik.co/assets/icons/edit.svg"
+                                  onClick={(e) =>
+                                    this.handleEditAddress(
+                                      e,
+                                      defaultAddress[0]
+                                    )
+                                  }
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        ""
+                      )}
+                      {addressList.length ? (
+                        <div
+                          style={{
+                            fontSize: "21px",
+                            lineHeight: "25px",
+                            fontWeight: "500",
+                            
+                          }}
+                        >
+                          <p>Other Address</p>
+                        </div>
+                      ) : (
+                        ""
+                      )}
+                      <div className="add-list">
+                        {addressList.map((n, index) => {
+                          
+                          return (
+                            <div
+                              key={n.address_id}
+                              className="address-card"
+                              style={
+                                selectedAddress == n.address_id
+                                  ? { border: "1px solid" }
+                                  : { border: "1px solid rgb(220, 220, 220)" }
+                              }
+                              onChange={(e) => {
+                                this.handleSelectedAddress(e);
+                              }}
+                            >
+                              <input
+                                type="radio"
+                                id={n.address_id}
+                                name="input-type"
+                                value={n.address_id}
+                                style={{ width: "30px", height: "20px" }}
+                                checked={selectedAddress == n.address_id}
+                              />
+                              <label for={n.address_id}>
+                                <div>{n.name}</div>
+                                <p style={{marginBottom:'30px', marginTop:'5px', fontSize:'18px'}}>{n.address1}</p>
+                              </label>
+                              <div>
+                                <div className="default-btn">
+                                  <button
+                                    style={{
+                                      cursor: "pointer",
+                                    }}
+                                    onClick={(e) =>
+                                      this.handleMakeDefaultAddress(
+                                        e,
+                                        n.address_id
+                                      )
+                                    }
+                                  >
+                                    Make my default address
+                                  </button>
+                                </div>
+                                <div className="edit-address">
+                                  <img
+                                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHwAAAB8CAMAAACcwCSMAAAAbFBMVEX/AAD/////Wlr/+vr/9fX/Tk7/bW3/6Oj/IyP/4eH/VFT/Kyv/c3P/V1f/FBT/Q0P/7+//k5P/Nzf/SUn/qKj/gYH/2dn/yMj/wcH/1NT/X1//iYn/uLj/PDz/MTH/Gxv/enr/nZ3/rq7/Z2fFDFhIAAACsElEQVRoge3b6XajIBQAYAxYtamKiRq3ROO8/zuObRMXlqCg9sz03p+4fAEJoOeCrDlBsqg4zI+yorNui2acQ6MALY3EWQdP7cV0F9fLGnh607ERqtW6EscnPbvTlQ9eiZe6NkKFKY71bYQ8Q7w1wSNDvDHBbWyE47MJfiRmeGiCuz+J16vjgTS2xusk86RxKd0t8ZNiyGSmgXXx/PXZluXVm+GlyraseDNcWfFu2bEZrhiwvi4AHPBfg1vj891F8zl12LiOb8YdFcSk5h57lErxyr+5bKBJTWbE6wuO760QxwXaJULK4/htH7tb2REOz/ayEYo5/M9+eL+ofeJU+61oebgOgzuu+qLNcGK0TDXErd06O0I+1+Hy/fCKH2SivewPzON76c0w24zHdq8szl3UgivOV0EhQldxNz2JXi+Dz3sfkvEilJlSCcGEH27ulBAv4YoThxCHb683jxDaci9PNsWEmd8F8znb74PHa0rFlD/mp4xhHl8EuO9INr+ymIH3Q/G0SRpxXwmfxexv1cKP/ee8y6Q9+oc3fUXq/0fssKWFv/e9E48bePhNZNK9Utl9DHFLjGN/fPrwBeoDcMABBxxwwAEHHHDAAQcccMABBxxwwAEHHHDAAQcccMABBxzw/w8f0vPpGO8zbSwqScxl0h+08KCvyzRxrM+5Tid5C32eAZttpZe2kDwPTLMgbEkNnw3FZnLo4Y8UDNIwxd/JNphFiu/nETPFujgqWi+P+R1Mdpyn7YErDu+5V/E30cW7By8o+yyWlQvK9PEV4h/Am21wn0//FeAbZYclvCTAN0pCjWfhRJx+ZhjDcPwSN9smJgvRThBhirmvvtfSuImyzYU4Xb3hRY0uS653Vq57KN4wKMnsJ/FxPbqOJPs0pdsKyOW+ZAewNIook+5s+Av4AE/h/DJjjwAAAABJRU5ErkJggg=="
+                                    style={{
+                                      width: "20px",
+                                      marginBottom: "3px",
+                                      marginRight: "6px",
+                                      cursor: "pointer",
+                                    }}
+                                    onClick={(e) =>
+                                      this.handleDeleteAddress(
+                                        e,
+                                        n.address_id
+                                      )
+                                    }
+                                  />
+                                  <img
+                                    style={{ width: "20px", cursor: "pointer" }}
+                                    src="https://pdp.gokwik.co/assets/icons/edit.svg"
+                                    onClick={(e) =>
+                                      this.handleEditAddress(
+                                        e,
+                                        n
+                                      )
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div
+                        className="add-new-desktop"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          let address = {
+                            pincode: "",
+                            city: "",
+                            state: "",
+                            fullAddress: "",
+                            fullName: "",
+                            selectedAddressType: "",
+                            email: "",
+                          };
+                          this.setState({
+                            addNewAddress: true,
+                            address: address,
+                            continueBtn:false
+                          });
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="32"
+                          height="32"
+                          viewBox="0 0 36 36"
+                          fill="none"
+                          style={{ stroke: "#000" }}
+                        >
+                          <circle
+                            cx="18"
+                            cy="18"
+                            r="17"
+                            style={{ stroke: "#000" }}
+                            fill="white"
+                            stroke="#0365D6"
+                            stroke-width="2"
+                          ></circle>
+                          <path
+                            d="M18 11V25"
+                            style={{ stroke: "#000" }}
+                            stroke="#0365D6"
+                            stroke-width="2"
+                          ></path>
+                          <path
+                            d="M11 18L25 18"
+                            style={{ stroke: "#000" }}
+                            stroke="#0365D6"
+                            stroke-width="2"
+                          ></path>
+                        </svg>
+                        <span>Add New Address</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="address-container">
+                    <div className="address-title">
+                      <p className="heading-address">
+                        {editAddress ? "Edit Address" : "Add New Address"}
+                      </p>
+                      <p className="mandatory-label">
+                        <em>*</em>
+                        Mandatory Fields
+                      </p>
+                    </div>
+                    <div className="phone-number">
+                      <span
+                        style={{
+                          fontWeight: "500",
+                          fontSize: "20px",
+                        }}
+                      >
+                        {"+91   - " +
+                          mobileNumber.substring(0, 5) +
+                          " " +
+                          mobileNumber.substring(5, 10)}
+                      </span>
+                      <img
+                        src="https://pdp.gokwik.co/assets/icons/change-icon.svg"
+                        style={{
+                          marginLeft: "1rem",
+                          cursor: "pointer",
+                          maxWidth: "100%",
+                          height: "auto",
+                          verticalAlign: "middle",
+                          width: "17px",
+                        }}
+                      />
+                    </div>
+                    <div
+                      className="address-wrapper"
+                      style={
+                        !continueBtn && !editAddress
+                          ? { overflowY: "hidden" }
+                          : { overflowY: "auto" }
+                      }
+                    >
+                      
+                      <div className="form">
+                        <input
+                          type="tel"
+                          id="pincode"
+                          className="form__input"
+                          placeholder=" "
+                          maxlength={6}
+                          value={address.pincode}
+                          onChange={(e) => {
+                            this.handleAddress(e, "pincode");
+                          }}
+                        />
+                        <label for="pincode" className="form__label">
+                          Pincode
+                          <span style={{ fontWeight: "600" }}> *</span>
+                        </label>
+                      </div>
+                      <div
+                        className="form-wrap"
+                        style={
+                          !continueBtn && !editAddress
+                            ? { visibility: "hidden" }
+                            : {}
+                        }
+                      >
+                        <form className="survey-form">
+                          <div className="line-inputs">
+                            <div className="form">
+                              <input
+                                className="form__input"
+                                id="city"
+                                type="text"
+                                required
+                                maxlength={250}
+                                placeholder=" "
+                                value={address.city}
+                                onChange={(e) => this.handleAddress(e, city)}
+                              />
+                              <label for="city" className="form__label">
+                                City<em>*</em>
+                              </label>
+                            </div>
+                          </div>
+                          <div className='line-inputs'>
+                            <div className="form">
+                              <input
+                                className="form__input"
+                                id="state"
+                                type="text"
+                                required
+                                maxlength={250}
+                                placeholder=" "
+                                readOnly
+                                value={address.state}
+                              />
+                              <label for="state" className="form__label">
+                                State<em>*</em>
+                              </label>
+                            </div>
+                            </div>
+                          <div className="line-inputs">
+                            <div className="form">
+                              <input
+                                className="form__input"
+                                id="fullName"
+                                type="text"
+                                required
+                                maxlength={250}
+                                placeholder=" "
+                                value={address.fullName}
+                                onChange={(e) =>
+                                  this.handleAddress(e, "fullName")
+                                }
+                              />
+                              <label for="fullName" className="form__label">
+                                Full Name<em>*</em>
+                              </label>
+                            </div>
+                          </div>
+                          <div className="line-inputs">
+                            <div className="form">
+                              <input
+                                className="form__input"
+                                id="address"
+                                type="text"
+                                required
+                                maxlength={250}
+                                placeholder=" "
+                                value={address.fullAddress}
+                                onChange={(e) =>
+                                  this.handleAddress(e, "fullAddress")
+                                }
+                              />
+                              <label for="address" className="form__label">
+                                Full Address<em>*</em>
+                              </label>
+                            </div>
+                          </div>
+                          
+                          
+                          <div className="line-inputs">
+                            <div className="form" style={{marginTop:'10px'}}>
+                              <input type="checkbox" className="input-default-checkbox"  name="default_address" style={{width:'20px', height:'20px'}} checked={currentDefaultAddress} onChange={ (e)=>showDefaultCheckBox ? this.handleDefaultAddress(e):''}/>
+                              <label for="default_address" style={{color:'grey', padding:'5px', fontSize:'18px'}}>Make this default address</label>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                      
+                    </div>
+                  </div>
+                ))}
+              {!mobileOTPpage && currentPage === "mobile" && (
+                <div className="main-container" style={{flexDirection:'row', alignItems:'center', justifyContent:'center'}}>
+                  <div className="mpi-container">
+                    <div className="mpi-wrapper">
+                      <div
+                        className="main-content"
+                        
+                      >
+                        <h3 className="main-content_header" style={{fontSize:'18px'}}>
+                          Enter Mobile Number
+                        </h3>
+                        <div className="merchant-border" id="input-wrapper" style={{padding:'0',maxWidth:'375px', width:'85%'}}>
+                          <span id="country-code" style={{fontSize:'18px'}}>+91 </span>
+                          <span className="vr-line"></span>
+                          <input
+                            type="text"
+                            value={mobileNumber}
+                            onChange={(e) => {
+                              e.preventDefault();
+                              this.setState({ mobileNumber: e.target.value });
+
+                              if (e.target.value.length === 10) {
+                                this.setState({ showLoader: true });
+                                this.getOTP(e.target.value);
+                              }
+                            }}
+                            style={{fontSize:'18px'}}
+                            inputmode="numeric"
+                            placeholder="Enter Number"
+                            className="phone-input"
+                            pattern="[0-9]{5}-[0-9]{5}"
+                            autoComplete="tel"
+                          />
+                        </div>
+                        
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {mobileOTPpage && currentPage=="mobile" && existingUser && (
+                <div>
+                  <div className="otp-container" style={{flexDirection:'row', justifyContent:'center',alignItems:'center', maxHeight:'436px'}}>
+                    <div className="otp-input-container">
+                      <div className="phone-number-change">
+                        <p className="verifyMobileNumber-label">
+                          Verify Mobile Number
+                        </p>
+                        <span className="enterOTP-label">
+                          Enter the OTP received on{" "}
+                        </span>
+                        <span className="mobile-number">
+                          {"+91- " +
+                            mobileNumber.substring(0, 5) +
+                            " " +
+                            mobileNumber.substring(5, 10)}
+                          <button
+                            className="change-phoneNumber"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              this.setState({ mobileOTPpage: false });
+                            }}
+                          >
+                            <img src="https://pdp.gokwik.co/assets/icons/change-icon.svg" />
+                          </button>
+                        </span>
+                      </div>
+                      <div
+                        style={{ display: "flex", justifyContent: "center" }}
+                      >
+                        {otp.map((data, index) => {
+                          return (
+                            <input
+                              className="otp-field"
+                              type="text"
+                              name="otp"
+                              maxLength="1"
+                              key={index}
+                              value={data}
+                              style={{
+                                width: "35px",
+                                height: "35px",
+                                marginLeft: "5%",
+                                border: "1px solid",
+                                fontSize: "22px",
+                                textAlign: "center",
+                                borderRadius: "8px",
+                              }}
+                              onChange={(e) =>
+                                this.handleOTPChange(e.target, index)
+                              }
+                              onFocus={(e) => e.target.select()}
+                            />
+                          );
+                        })}
+                      </div>
+                      {errors.otp !== "" && (
+                        <div className="error-Message">{errors.otp}</div>
+                      )}
+                      {/* <div className="input-otp">
+                        <input
+                          type="tel"
+                          maxlength={4}
+                          className="otp-input"
+                          value={otp}
+                          onChange={(e) => {
+                            e.preventDefault();
+                            this.setState({ otp: e.target.value });
+                          }}
+                        />
+                        <span className="otp-box-1 otp-box"></span>
+                        <span className="otp-box-2 otp-box"></span>
+                        <span className="otp-box-3 otp-box"></span>
+                        <span className="otp-box-4 otp-box"></span>
+                      </div> */}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {currentPage === "mobile" && !existingUser && (
+                <div className="info_container" style={{ padding: "1.2rem" }}>
+                  <div className="address-title">
+                    <p className="heading-address">Contact Information</p>
+                  </div>
+                  <div className="line-inputs" style={{ display: "block" }}>
+                    <div className="form">
+                      <input
+                        className="form__input"
+                        id="fullName"
+                        type="text"
+                        required
+                        maxlength={50}
+                        placeholder=" "
+                        value={newUser.name}
+                        onChange={(e) => this.handleNewUserChange(e, "name")}
+                      />
+                      <label for="fullName" className="form__label">
+                        Full Name<em>*</em>
+                      </label>
+                    </div>
+                    <div className="form">
+                      <input
+                        className="form__input"
+                        id="mobile"
+                        type="tel"
+                        readOnly
+                        placeholder=" "
+                        value={mobileNumber}
+                        style={{color:'#696969'}}
+                        
+                      />
+                      <label for="mobile" className="form__label">
+                        Mobile<em>*</em>
+                      </label>
+                    </div>
+                    <div className="form">
+                      <input
+                        className="form__input"
+                        id="email"
+                        type="text"
+                        required
+                        placeholder=" "
+                        value={newUser.email}
+                        onChange={(e) => this.handleNewUserChange(e, "email")}
+                      />
+                      <label for="email" className="form__label">
+                        Email<em>*</em>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            </div>
+            <div className="footer">
+              <div className="btn-wrapper" style={{maxWidth:'100%'}}>
+                <button
+                  className={
+                    continueBtn || !existingUser
+                      ? "continue-button"
+                      : "continue-button button-disabled"
+                  }
+                  id="continue-button"
+                  name={
+                    addNewAddress
+                      ? "addNewAddress"
+                      : editAddress
+                      ? "save"
+                      : "continue"
+                  }
+                  onClick={(e) => this.handleContinue(e)}
+                  style={
+                    currentPage == "pay"
+                      ? { visibility: "hidden" }
+                      : { visibility: "visible",padding:'1rem',fontSize:'18px' }
+                  }
+                >
+                  {editAddress || addNewAddress ? "Save" : "Continue"}
+                  <img
+                    id="arrow-img"
+                    src="https://pdp.gokwik.co/assets/icons/arrow-right.png"
+                  />
+                </button>
+                {mobileOTPpage &&currentPage=="mobile" && existingUser && secondLeft>0 && <span style={{color:'red', display:'flex',justifyContent:'center',marginTop:'3%', fontWeight:'500', fontSize:'18px'}}>Resend OTP in 00:{secondLeft<10?'0':''}{secondLeft}</span>}
+                  {mobileOTPpage &&currentPage=="mobile" && existingUser && !secondLeft && <span style={{color:'#000', display:'flex',justifyContent:'center',marginTop:'3%', fontWeight:'600',cursor:'pointer', fontSize:'18px'}} onClick={(e)=>this.getOTP(mobileNumber)}>Resend OTP</span>}  
+              </div>{" "}
+              <div className="main-footer" style={{padding:'1rem 0'}}>
+                <div>
+                  <span className="terms-policy">
+                  <a
+                    className="gokwik-links"
+                    target="_blank"
+                    href="https://www.gokwik.co/terms"
+                  >
+                    T&C
+                  </a>
+                  {" | "}
+                  <a
+                    className="gokwik-links"
+                    target="_blank"
+                    href="https://www.gokwik.co/data-policy"
+                  >
+                    Privacy
+                  </a>
+                  {" | a4347b8b"}
+                </span>
+                </div>
+                <div style={{position:'relative', display:'flex'}}>
+                  <span className="powered-by">Powered By</span>
+                  <a
+                    href="https://typof.com/"
+                    target="_blank"
+                    style={{ color: "#050038" }}
+                  >
+                  <div>
+                    <img
+                      src="https://d1yvcml1qpeqwy.cloudfront.net/new-site/images/logo-2.png"
+                      style={{
+                        width: "50px",
+                        height: "16px",
+                        verticaAlign: "middle",
+                        marginLeft: "5px",
+                        
+                      }}
+                    />
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>:
+
+        <div className="page-wrap">
+          {showLoader && (
+            <div className="mobile-otp-loader">
+              <div style={{ display: "flex" }}>
+                <LoadingBlackSpinner />
+              </div>
+              <div></div>
+            </div>
+          )}
+          <div className="user-detail">
+            <header className="user-detail__header">
+              <div className="merchant-logo">
+                <img src="https://d1yvcml1qpeqwy.cloudfront.net/new-site/images/logo-2.png" />
+              </div>
+            </header>
+            <div className="gk-content" >
+              <div className="steps">
+                <div class="steps_inner">
+                  <div className="steps_inner_mobile">
+                    <div
+                      className="info_wrap"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        this.setState({
+                          mobileOTPpage: false,
+                          currentPage: "mobile",
+                          stepMobileVerification: false,
+                          stepAddressVerification: false,
+                          continueBtn: false,
+                          mobileVerification: false,
+                          addressVerificatin: false,
+                          mobileOTPpage: false,
+                          otp: ["", "", "", ""],
+                          address: {
+                            pincode: "",
+                            city: "",
+                            state: "",
+                            fullAddress: "",
+                            fullName: "",
+                            selectedAddressType: "",
+                            email: "",
+                          },
+                          existingUser: true,
+                          newUser: { name: "", email: "" },
+                          userOTP: "",
+                          user_id: "",
+                          addressList: [],
+                          selectedAddress: "",
+                          errors: { otp: "" },
+                          addNewAddress: false,
+                          editAddress: false,
+                          address_id: "",
+                          progress: ".00",
+                          mobileNumber: "",
+                          currentDefaultAddress:true
+                        });
+                      }}
+                    >
+                      <span
+                        className="circle-box"
+                        style={
+                          stepMobileVerification
+                            ? { border: "2px solid green" }
+                            : { border: "2px solid", alignItems:'center' }
+                        }
+                      >
+                        {stepMobileVerification ? (
+                          <img
+                            style={{width:'15px', height:'22px'}}
+                            src="https://pdp.gokwik.co/assets/icons/green-check.svg"
+                            alt=""
+                          />
+                        ) : (
+                          1
+                        )}
+                      </span>
+                      <span
+                        className="title"
+                        style={
+                          stepMobileVerification
+                            ? { color: "green" }
+                            : { color: "#000" }
+                        }
+                      >
+                        Mobile
+                      </span>
+                    </div>
+                  </div>
+                  <div className="steps_inner_address">
+                    <div
+                      className="info_wrap"
+                      style={
+                        stepAddressVerification
+                          ? { cursor: "pointer" }
+                          : { cursor: "text" }
+                      }
+                      onClick={
+                        stepAddressVerification
+                          ? (e) => {
+                              this.setState({
+                                currentPage: "address",
+                                stepAddressVerification: false,
+                                progress: "0.33",
+                              });
+                            }
+                          : ""
+                      }
+                    >
+                      <span
+                        className="circle-box"
+                        style={
+                          currentPage == "address"
+                            ? { border: "2px solid black", alignItems:'center' }
+                            : stepAddressVerification
+                            ? { border: "2px solid green " }
+                            : { background: "#ededed", color: "#c9c9c9", alignItems:'center' }
+                        }
+                      >
+                        {stepAddressVerification ? (
+                          <img
+                          style={{width:'15px', height:'22px'}}
+                            src="https://pdp.gokwik.co/assets/icons/green-check.svg"
+                            alt=""
+                          />
+                        ) : (
+                          2
+                        )}
+                      </span>
+                      <span
+                        className="title"
+                        style={
+                          currentPage == "address"
+                            ? { color: "#000" }
+                            : stepAddressVerification
+                            ? { color: "green" }
+                            : { color: "#c9c9c9" }
+                        }
+                      >
+                        Address
+                      </span>
+                    </div>
+                  </div>
+                  <div className="steps_inner_pay">
+                    <div className="info_wrap">
+                      <span
+                        className="circle-box"
+                        style={
+                          currentPage == "pay"
+                            ? { border: "2px solid black" }
+                            : { background: "#ededed", color: "#c9c9c9" }
+                        }
+                      >
+                        3
+                      </span>
+                      <span
+                        className="title"
+                        style={
+                          currentPage == "pay"
+                            ? { color: "#000", alignItems:'center' }
+                            : { color: "#c9c9c9" }
+                        }
+                      >
+                        Pay
+                      </span>
+                    </div>
+                  </div>
+                  <progress
+                    value={progress}
+                    className="progress-line"
+                  ></progress>
+                </div>
+              </div>
+              {currentPage === "pay" && (
+                <div className="payment-options-wrapper">
+                  <div className="payment-options">
+                    <div className="payment-title">
+                      <span>
+                        Please select payment method to complete the order
+                      </span>
+                      <span>Additional 7% discount on UPI</span>
+                    </div>
+                    <button className="option-button">
+                      <section className="upi-badge">
+                        <div className="amount-wrapper">
+                          <span className="price-text">₹{totalAmount}</span>
+                          <span className="discount-badge">
+                            Get 7% discount
+                          </span>
+                        </div>
+                        <span className="payViaUpi-btn-label">Pay via UPI</span>
+                      </section>
+                      <section>
+                        <img
+                          src="https://cdn.gokwik.co/v4/images/upi-icons.svg"
+                          style={{ width: "90px" }}
+                        />
+                        <img
+                          src="https://cdn.gokwik.co/v4/images/right-arrow.svg"
+                          style={{ width: "14px", marginLeft: "15px" }}
+                        />
+                      </section>
+                    </button>
+                    <button
+                      className="option-button-cod"
+                      style={{ cursor: "not-allowed" }}
+                    >
+                      <section className="cod-badge">
+                        <div className="amount-wrapper">
+                          <span className="price-text">₹{totalAmount}</span>
+                        </div>
+                        <span>Cash On Delivery</span>
+                      </section>
+                      <section className="">
+                        <img src="https://pdp.gokwik.co/assets/icons/cod.svg" />
+                        <img src="https://pdp.gokwik.co/assets/icons/right-arrow.svg" />
+                      </section>
+                    </button>
+                    <div className="error_wrap">
+                      <span className="text-error">
+                        CoD is not available for the product in your cart.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {currentPage === "address" &&
+                (defaultAddress.length && !addNewAddress && !editAddress ? (
+                  <div className="address-listing">
+                    <div className="address-listing-wrap">
+                      {showMessage &&<div style={{display:'flex', justifyContent:'center', color:'green', fontWeight:'600', fontSize:'16px'}}>{message}</div>}
+                      <div className="address-listing-inner">
+                        {defaultAddress[0] ? (
+                          <div>
+                            <p>Default Address</p>
+                          </div>
+                        ) : (
+                          ""
+                        )}
+                      </div>
+                      {defaultAddress[0] ? (
+                        <div className="add-list">
+                          <div
+                            className="address-card"
+                            style={
+                              selectedAddress == defaultAddress[0].address_id
+                                ? { border: "1px solid" }
+                                : { border: "1px solid rgb(220, 220, 220)" }
+                            }
+                            onChange={(e) => {
+                              this.handleSelectedAddress(e);
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              id={
+                                defaultAddress[0]
+                                  ? defaultAddress[0].address_id
+                                  : ""
+                              }
+                              name="input-type"
+                              value={
+                                defaultAddress[0]
+                                  ? defaultAddress[0].address_id
+                                  : ""
+                              }
+                              style={{ width: "30px", height: "20px" }}
+                              checked={
+                                selectedAddress == defaultAddress[0].address_id
+                              }
+                            />
+                            <label
+                              for={
+                                defaultAddress[0]
+                                  ? defaultAddress[0].address_id
+                                  : ""
+                              }
+                            >
+                              <div>
+                                {defaultAddress[0]
+                                  ? defaultAddress[0].name
+                                  : ""}
+                              </div>
+                              <p>
+                                {defaultAddress[0]
+                                  ? defaultAddress[0].address1
+                                  : ""}
+                              </p>
+                            </label>
+                            <div>
+                              <div className="default-btn">
+                                <button
+                                  style={{
+                                    background: "#a6a6a6",
+                                    cursor: "not-allowed",
+                                  }}
+                                >
+                                  Default
+                                </button>
+                              </div>
+                              <div className="edit-address">
+                                <img
+                                  style={{ width: "20px", cursor: "pointer" }}
+                                  src="https://pdp.gokwik.co/assets/icons/edit.svg"
+                                  onClick={(e) =>
+                                    this.handleEditAddress(
+                                      e,
+                                      defaultAddress[0]
+                                    )
+                                  }
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        ""
+                      )}
+                      {addressList.length ? (
+                        <div
+                          style={{
+                            fontSize: "24px",
+                            lineHeight: "25px",
+                            fontWeight: "500",
+                            marginLeft: "13px",
+                          }}
+                        >
+                          <p>Other Address</p>
+                        </div>
+                      ) : (
+                        ""
+                      )}
+                      <div className="add-list">
+                        {addressList.map((n, index) => {
+                          
+                          return (
+                            <div
+                              key={n.address_id}
+                              className="address-card"
+                              style={
+                                selectedAddress == n.address_id
+                                  ? { border: "1px solid" }
+                                  : { border: "1px solid rgb(220, 220, 220)" }
+                              }
+                              onChange={(e) => {
+                                this.handleSelectedAddress(e);
+                              }}
+                            >
+                              <input
+                                type="radio"
+                                id={n.address_id}
+                                name="input-type"
+                                value={n.address_id}
+                                style={{ width: "30px", height: "20px" }}
+                                checked={selectedAddress == n.address_id}
+                              />
+                              <label for={n.address_id}>
+                                <div>{n.name}</div>
+                                <p>{n.address1}</p>
+                              </label>
+                              <div>
+                                <div className="default-btn">
+                                  <button
+                                    style={{
+                                      cursor: "pointer",
+                                    }}
+                                    onClick={(e) =>
+                                      this.handleMakeDefaultAddress(
+                                        e,
+                                        n.address_id
+                                      )
+                                    }
+                                  >
+                                    Make my default address
+                                  </button>
+                                </div>
+                                <div className="edit-address">
+                                  <img
+                                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHwAAAB8CAMAAACcwCSMAAAAbFBMVEX/AAD/////Wlr/+vr/9fX/Tk7/bW3/6Oj/IyP/4eH/VFT/Kyv/c3P/V1f/FBT/Q0P/7+//k5P/Nzf/SUn/qKj/gYH/2dn/yMj/wcH/1NT/X1//iYn/uLj/PDz/MTH/Gxv/enr/nZ3/rq7/Z2fFDFhIAAACsElEQVRoge3b6XajIBQAYAxYtamKiRq3ROO8/zuObRMXlqCg9sz03p+4fAEJoOeCrDlBsqg4zI+yorNui2acQ6MALY3EWQdP7cV0F9fLGnh607ERqtW6EscnPbvTlQ9eiZe6NkKFKY71bYQ8Q7w1wSNDvDHBbWyE47MJfiRmeGiCuz+J16vjgTS2xusk86RxKd0t8ZNiyGSmgXXx/PXZluXVm+GlyraseDNcWfFu2bEZrhiwvi4AHPBfg1vj891F8zl12LiOb8YdFcSk5h57lErxyr+5bKBJTWbE6wuO760QxwXaJULK4/htH7tb2REOz/ayEYo5/M9+eL+ofeJU+61oebgOgzuu+qLNcGK0TDXErd06O0I+1+Hy/fCKH2SivewPzON76c0w24zHdq8szl3UgivOV0EhQldxNz2JXi+Dz3sfkvEilJlSCcGEH27ulBAv4YoThxCHb683jxDaci9PNsWEmd8F8znb74PHa0rFlD/mp4xhHl8EuO9INr+ymIH3Q/G0SRpxXwmfxexv1cKP/ee8y6Q9+oc3fUXq/0fssKWFv/e9E48bePhNZNK9Utl9DHFLjGN/fPrwBeoDcMABBxxwwAEHHHDAAQcccMABBxxwwAEHHHDAAQcccMABBxzw/w8f0vPpGO8zbSwqScxl0h+08KCvyzRxrM+5Tid5C32eAZttpZe2kDwPTLMgbEkNnw3FZnLo4Y8UDNIwxd/JNphFiu/nETPFujgqWi+P+R1Mdpyn7YErDu+5V/E30cW7By8o+yyWlQvK9PEV4h/Am21wn0//FeAbZYclvCTAN0pCjWfhRJx+ZhjDcPwSN9smJgvRThBhirmvvtfSuImyzYU4Xb3hRY0uS653Vq57KN4wKMnsJ/FxPbqOJPs0pdsKyOW+ZAewNIook+5s+Av4AE/h/DJjjwAAAABJRU5ErkJggg=="
+                                    style={{
+                                      width: "20px",
+                                      marginBottom: "3px",
+                                      marginRight: "6px",
+                                      cursor: "pointer",
+                                    }}
+                                    onClick={(e) =>
+                                      this.handleDeleteAddress(
+                                        e,
+                                        n.address_id
+                                      )
+                                    }
+                                  />
+                                  <img
+                                    style={{ width: "20px", cursor: "pointer" }}
+                                    src="https://pdp.gokwik.co/assets/icons/edit.svg"
+                                    onClick={(e) =>
+                                      this.handleEditAddress(
+                                        e,
+                                        n
+                                      )
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div
+                        className="add-new-desktop"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          let address = {
+                            pincode: "",
+                            city: "",
+                            state: "",
+                            fullAddress: "",
+                            fullName: "",
+                            selectedAddressType: "",
+                            email: "",
+                          };
+                          this.setState({
+                            addNewAddress: true,
+                            address: address,
+                            continueBtn:false
+                          });
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="36"
+                          height="36"
+                          viewBox="0 0 36 36"
+                          fill="none"
+                          style={{ stroke: "#000" }}
+                        >
+                          <circle
+                            cx="18"
+                            cy="18"
+                            r="17"
+                            style={{ stroke: "#000" }}
+                            fill="white"
+                            stroke="#0365D6"
+                            stroke-width="2"
+                          ></circle>
+                          <path
+                            d="M18 11V25"
+                            style={{ stroke: "#000" }}
+                            stroke="#0365D6"
+                            stroke-width="2"
+                          ></path>
+                          <path
+                            d="M11 18L25 18"
+                            style={{ stroke: "#000" }}
+                            stroke="#0365D6"
+                            stroke-width="2"
+                          ></path>
+                        </svg>
+                        <span>Add New Address</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="address-container">
+                    <div className="address-title">
+                      <p className="heading-address">
+                        {editAddress ? "Edit Address" : "Add New Address"}
+                      </p>
+                      <p className="mandatory-label">
+                        <em>*</em>
+                        Mandatory Fields
+                      </p>
+                    </div>
+                    <div className="phone-number">
+                      <span
+                        style={{
+                          fontWeight: "500",
+                          fontSize: "20px",
+                        }}
+                      >
+                        {"+91   - " +
+                          mobileNumber.substring(0, 5) +
+                          " " +
+                          mobileNumber.substring(5, 10)}
+                      </span>
+                      <img
+                        src="https://pdp.gokwik.co/assets/icons/change-icon.svg"
+                        style={{
+                          marginLeft: "1rem",
+                          cursor: "pointer",
+                          maxWidth: "100%",
+                          height: "auto",
+                          verticalAlign: "middle",
+                          width: "17px",
+                        }}
+                      />
+                    </div>
+                    <div
+                      className="address-wrapper"
+                      style={
+                        !continueBtn && !editAddress
+                          ? { overflowY: "hidden" }
+                          : { overflowY: "auto" }
+                      }
+                    >
+                      <div></div>
+                      <div className="form">
+                        <input
+                          type="tel"
+                          id="pincode"
+                          className="form__input"
+                          placeholder=" "
+                          maxlength={6}
+                          value={address.pincode}
+                          onChange={(e) => {
+                            this.handleAddress(e, "pincode");
+                          }}
+                        />
+                        <label for="pincode" className="form__label">
+                          Pincode
+                          <span style={{ fontWeight: "600" }}> *</span>
+                        </label>
+                      </div>
+                      <div
+                        className="form-wrap"
+                        style={
+                          !continueBtn && !editAddress
+                            ? { visibility: "hidden" }
+                            : {}
+                        }
+                      >
+                        <form className="survey-form">
+                          <div className="line-inputs">
+                            <div className="form">
+                              <input
+                                className="form__input"
+                                id="city"
+                                type="text"
+                                required
+                                maxlength={250}
+                                placeholder=" "
+                                value={address.city}
+                                onChange={(e) => this.handleAddress(e, city)}
+                              />
+                              <label for="city" className="form__label">
+                                City<em>*</em>
+                              </label>
+                            </div>
+                            <div className="form">
+                              <input
+                                className="form__input"
+                                id="state"
+                                type="text"
+                                required
+                                maxlength={250}
+                                placeholder=" "
+                                readOnly
+                                value={address.state}
+                              />
+                              <label for="state" className="form__label">
+                                State<em>*</em>
+                              </label>
+                            </div>
+                          </div>
+                          <div className="line-inputs">
+                            <div className="form">
+                              <input
+                                className="form__input"
+                                id="fullName"
+                                type="text"
+                                required
+                                maxlength={250}
+                                placeholder=" "
+                                value={address.fullName}
+                                onChange={(e) =>
+                                  this.handleAddress(e, "fullName")
+                                }
+                              />
+                              <label for="fullName" className="form__label">
+                                Full Name<em>*</em>
+                              </label>
+                            </div>
+                            {/* <div className="form">
+                              <input
+                                className="form__input"
+                                id="email"
+                                type="email"
+                                required
+                                maxlength={250}
+                                placeholder=" "
+                                value={address.email}
+                                onChange={(e) => {
+                                  this.handleAddress(e, "email");
+                                }}
+                              />
+                              <label for="email" className="form__label">
+                                Email Address<em>*</em>
+                              </label>
+                            </div> */}
+                          </div>
+                          <div className="line-inputs">
+                            <div className="form">
+                              <input
+                                className="form__input"
+                                id="address"
+                                type="text"
+                                required
+                                maxlength={250}
+                                placeholder=" "
+                                value={address.fullAddress}
+                                onChange={(e) =>
+                                  this.handleAddress(e, "fullAddress")
+                                }
+                              />
+                              <label for="address" className="form__label">
+                                Full Address<em>*</em>
+                              </label>
+                            </div>
+                          </div>
+                          
+                          <div className="line-inputs">
+                            <div className="form" style={{marginTop:'10px'}}>
+                              <input type="checkbox" className="input-default-checkbox"  name="default_address" style={{width:'20px', height:'20px'}} checked={currentDefaultAddress} onChange={ (e)=>showDefaultCheckBox ? this.handleDefaultAddress(e):''}/>
+                              <label for="default_address" style={{color:'grey', padding:'5px', fontSize:'18px'}}>Make this default address</label>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                      
+                    </div>
+                  </div>
+                ))}
+              {!mobileOTPpage && currentPage === "mobile" && (
+                <div className="main-container">
+                  <div className="mpi-container">
+                    <div className="mpi-wrapper">
+                      <div
+                        className="main-content"
+                        
+                      >
+                        <h3 className="main-content_header">
+                          Enter Mobile Number
+                        </h3>
+                        <div className="merchant-border" id="input-wrapper">
+                          <span id="country-code">+91 </span>
+                          <span className="vr-line"></span>
+                          <input
+                            type="text"
+                            value={mobileNumber}
+                            onChange={(e) => {
+                              e.preventDefault();
+                              this.setState({ mobileNumber: e.target.value });
+
+                              if (e.target.value.length === 10) {
+                                this.setState({ showLoader: true });
+                                this.getOTP(e.target.value);
+                              }
+                            }}
+                            inputmode="numeric"
+                            placeholder="Enter Number"
+                            className="phone-input"
+                            pattern="[0-9]{5}-[0-9]{5}"
+                            autoComplete="tel"
+                          />
+                        </div>
+                        
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {mobileOTPpage && currentPage=="mobile" && existingUser && (
+                <div>
+                  <div className="otp-container">
+                    <div className="otp-input-container">
+                      <div className="phone-number-change">
+                        <p className="verifyMobileNumber-label">
+                          Verify Mobile Number
+                        </p>
+                        <span className="enterOTP-label">
+                          Enter the OTP received on{" "}
+                        </span>
+                        <span className="mobile-number">
+                          {"+91- " +
+                            mobileNumber.substring(0, 5) +
+                            " " +
+                            mobileNumber.substring(5, 10)}
+                          <button
+                            className="change-phoneNumber"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              this.setState({ mobileOTPpage: false });
+                            }}
+                          >
+                            <img src="https://pdp.gokwik.co/assets/icons/change-icon.svg" />
+                          </button>
+                        </span>
+                      </div>
+                      <div
+                        style={{ display: "flex", justifyContent: "center" }}
+                      >
+                        {otp.map((data, index) => {
+                          return (
+                            <input
+                              className="otp-field"
+                              type="text"
+                              name="otp"
+                              maxLength="1"
+                              key={index}
+                              value={data}
+                              style={{
+                                width: "50px",
+                                height: "50px",
+                                marginLeft: "5%",
+                                border: "1px solid",
+                                fontSize: "25px",
+                                textAlign: "center",
+                                borderRadius: "8px",
+                              }}
+                              onChange={(e) =>
+                                this.handleOTPChange(e.target, index)
+                              }
+                              onFocus={(e) => e.target.select()}
+                            />
+                          );
+                        })}
+                      </div>
+                      {errors.otp !== "" && (
+                        <div className="error-Message">{errors.otp}</div>
+                      )}
+                      {/* <div className="input-otp">
+                        <input
+                          type="tel"
+                          maxlength={4}
+                          className="otp-input"
+                          value={otp}
+                          onChange={(e) => {
+                            e.preventDefault();
+                            this.setState({ otp: e.target.value });
+                          }}
+                        />
+                        <span className="otp-box-1 otp-box"></span>
+                        <span className="otp-box-2 otp-box"></span>
+                        <span className="otp-box-3 otp-box"></span>
+                        <span className="otp-box-4 otp-box"></span>
+                      </div> */}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {currentPage === "mobile" && !existingUser && (
+                <div className="info_container" style={{ padding: "1.2rem" }}>
+                  <div className="address-title">
+                    <p className="heading-address">Contact Information</p>
+                  </div>
+                  <div className="line-inputs" style={{ display: "block" }}>
+                    <div className="form">
+                      <input
+                        className="form__input"
+                        id="fullName"
+                        type="text"
+                        required
+                        maxlength={50}
+                        placeholder=" "
+                        value={newUser.name}
+                        onChange={(e) => this.handleNewUserChange(e, "name")}
+                      />
+                      <label for="fullName" className="form__label">
+                        Full Name<em>*</em>
+                      </label>
+                    </div>
+                    <div className="form">
+                      <input
+                        className="form__input"
+                        id="mobile"
+                        type="tel"
+                        readOnly
+                        placeholder=" "
+                        value={mobileNumber}
+                        style={{color:'#696969'}}
+                      />
+                      <label for="mobile" className="form__label">
+                        Mobile<em>*</em>
+                      </label>
+                    </div>
+                    <div className="form">
+                      <input
+                        className="form__input"
+                        id="email"
+                        type="text"
+                        required
+                        placeholder=" "
+                        value={newUser.email}
+                        onChange={(e) => this.handleNewUserChange(e, "email")}
+                      />
+                      <label for="email" className="form__label">
+                        Email<em>*</em>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="footer">
+              <div className="btn-wrapper">
+                <button
+                  className={
+                    continueBtn || !existingUser
+                      ? "continue-button"
+                      : "continue-button button-disabled"
+                  }
+                  id="continue-button"
+                  name={
+                    addNewAddress
+                      ? "addNewAddress"
+                      : editAddress
+                      ? "save"
+                      : "continue"
+                  }
+                  onClick={(e) => this.handleContinue(e)}
+                  style={
+                    currentPage == "pay"
+                      ? { visibility: "hidden" }
+                      : { visibility: "visible" }
+                  }
+                >
+                  {editAddress || addNewAddress ? "Save" : "Continue"}
+                  <img
+                    id="arrow-img"
+                    src="https://pdp.gokwik.co/assets/icons/arrow-right.png"
+                  />
+                </button>
+                {mobileOTPpage &&currentPage=="mobile" && existingUser && secondLeft>0 && <span style={{color:'red', display:'flex',justifyContent:'center',marginTop:'3%', fontWeight:'500', fontSize:'18px'}}>Resend OTP in 00:{secondLeft<10?'0':''}{secondLeft}</span>}
+                  {mobileOTPpage &&currentPage=="mobile" && existingUser && !secondLeft && <span style={{color:'#000', display:'flex',justifyContent:'center',marginTop:'3%', fontWeight:'600',cursor:'pointer', fontSize:'18px'}} onClick={(e)=>this.getOTP(mobileNumber)}>Resend OTP</span>}  
+              </div>{" "}
+              <div className="main-footer">
+                <span className="terms-policy">
+                  <a
+                    className="gokwik-links"
+                    target="_blank"
+                    href="https://www.gokwik.co/terms"
+                  >
+                    T&C
+                  </a>
+                  {" | "}
+                  <a
+                    className="gokwik-links"
+                    target="_blank"
+                    href="https://www.gokwik.co/data-policy"
+                  >
+                    Privacy
+                  </a>
+                  {" | a4347b8b"}
+                </span>
+                <div style={{position:'relative'}}>
+                  <span className="powered-by">Powered By</span>
+                  <a
+                    href="https://typof.com/"
+                    target="_blank"
+                    style={{ color: "#050038" }}
+                  >
+                    <img
+                      src="https://d1yvcml1qpeqwy.cloudfront.net/new-site/images/logo-2.png"
+                      style={{
+                        width: "50px",
+                        height: "16px",
+                        verticaAlign: "middle",
+                        marginLeft: "10px",
+                        position:'absolute',
+                        right:'-70%',
+                        bottom:'4%'
+                      }}
+                    />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="cart-summary">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "end",
+                padding: "20px 20px 0 20px",
+              }}
+            >
+              <button
+                onClick={this.props.close}
+                style={{ border: "none", background: "white" }}
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M18 6L6 18"
+                    stroke="#241C3C"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M6 6L18 18"
+                    stroke="#241C3C"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="cart-wrap">
+              <div className="cart-wrap-scroller">
+                <div className="cart-wrap-inner">
+                  <div className="summary">
+                    <div className="order-summary-container">
+                      <div
+                        className="summary-title"
+                        onClick={(e) => this.showSummary(e)}
+                      >
+                        <div className="summary-title-inner">
+                          <img
+                            src="https://pdp.gokwik.co/assets/icons/cart.svg"
+                            style={{
+                              width: "30px",
+                              height: "auto",
+                              verticalAlign: "middle",
+                            }}
+                          />
+                          <h4
+
+                          >
+                            Order Summary
+                          </h4>
+                          <img
+                            src="https://img.icons8.com/ios/344/expand-arrow--v2.png"
+                            style={
+                              showSummaryDetail
+                                ? { marginLeft: "10px", width: "13px" }
+                                : {
+                                    transform: "rotate(180deg)",
+                                    marginLeft: "10px",
+                                    width: "13px",
+                                  }
+                            }
+                          />
+                        </div>
+                      </div>
+                      {showSummaryDetail ? (
+                        <div className="order-summary-wrapper">
+                          <div className="cart-product">
+                            <div className="cart-product-detail">
+                              <ul class="cart-product-list">
+                                {cartItem.map((n) => {
+                                  return (
+                                    <li>
+                                      <div className="product-img">
+                                        <img src={n.image} />
+                                      </div>
+                                      <div className="product-details">
+                                        <div className="product-title">
+                                          {n.pname}
+                                        </div>
+                                        <span className="product-quantity">
+                                          Quantity{": " + n.quantity}
+                                        </span>
+                                        <div className="product-price">
+                                          Price{": ₹" + n.price}
+                                        </div>
+                                      </div>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          </div>
+                          <div className="order-summary">
+                            <div className="order-summary-details">
+                              <ul className="price-summary">
+                                <li className="subtotal">
+                                  <span>Subtotal</span>
+                                  <span>{"₹" + totalAmount}</span>
+                                </li>
+                                <li className="coupon-discount">
+                                  <span>Coupon Discount</span>
+                                  <span>-₹0.00</span>
+                                </li>
+                                <li className="prepaid-discount">
+                                  <span>Prepaid Discount</span>
+                                  <span>-₹0.00</span>
+                                </li>
+                                <li className="shipping">
+                                  <span>Shipping</span>
+                                  <span>To be calculated</span>
+                                </li>
+                                <li className="topay">
+                                  <span>To Pay</span>
+                                  <span>{"₹" + totalAmount}</span>
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        ""
+                      )}
+                    </div>
+                    {currentPage == 'pay' && 
+                    <div className="discounts">
+                      <div className="discount-coupon">
+                        <div className="discount-coupon-inner">
+                          <img
+                            src="https://pdp.gokwik.co/assets/icons/coupon-discount.svg"
+                            style={{
+                              marginLeft: "10px",
+                              width: "50px",
+                              height: "auto",
+                              verticalAlign: "middle",
+                              marginTop: "42px",
+                            }}
+                          />
+                          <div className="discount-box">
+                            <input
+                              type="text"
+                              name="discount"
+                              required
+                              maxLength="64"
+                              placeholder=" "
+                              className="discount-coupon-input"
+                            />
+                            <label
+                              for="discount"
+                              className="discount-coupon-text"
+                            >
+                              You have SAVED a lot, Congrats!
+                            </label>
+                            <div className="apply-coupon">
+                              <div className="coupon-wrap"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        }</div>
+      );
+  }
+}
+
+
+      const container = document.getElementById('root');
+      const root = ReactDOM.createRoot(container);
+      root.render(<MyApp />);
+
+    </script>
+    <!--
+      Note: this page is a great way to try React but it's not suitable for production.
+      It slowly compiles JSX with Babel in the browser and uses a large development build of React.
+
+      Read this section for a production-ready setup with JSX:
+      https://reactjs.org/docs/add-react-to-a-website.html#add-jsx-to-a-project
+
+      In a larger project, you can use an integrated toolchain that includes JSX instead:
+      https://reactjs.org/docs/create-a-new-react-app.html
+
+      You can also use React without JSX, in which case you can remove Babel:
+      https://reactjs.org/docs/react-without-jsx.html
+    -->
+  </body>
+</html>
