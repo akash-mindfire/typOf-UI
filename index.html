@@ -201,6 +201,7 @@ class Cart extends React.Component {
     render() {
       let { cartItem, totalAmount, showLoader, isHover, showModal } = this.state;
       let {baseURL, app_key,website,api_key}=this.props;
+      
       return (
         <>
         {showModal && <CheckOutModal close={(e) => this.close(e)} baseURL={baseURL} app_key={app_key} website={website} api_key={api_key} />}
@@ -461,7 +462,7 @@ class CheckOutModal extends React.Component {
       selectedAddressType: "",
       email: "",
     },
-    currentDefaultAddress:false,
+    currentDefaultAddress:true,
     stepMobileVerification: false,
     stepAddressVerification: false,
     existingUser: true,
@@ -537,8 +538,8 @@ class CheckOutModal extends React.Component {
       this.setState({ showMessage:false });
     }, 2000);
   };
-  handleContinue = (e) => {
-    e.preventDefault();
+  handleContinue = (e,targetName) => {
+    
     let {
       continueBtn,
       currentPage,
@@ -552,8 +553,9 @@ class CheckOutModal extends React.Component {
       currentDefaultAddress
     } = this.state;
     let {baseURL, app_key,website,api_key}=this.props;
+    console.log(currentPage,targetName)
     
-    if (currentPage == "address" && e.target.name == "addNewAddress") {
+    if (currentPage == "address" && targetName == "addNewAddress") {
       this.setState({showLoader:true});
       const Url = `${baseURL}addAddress${app_key}`;
       const postBody = {
@@ -581,6 +583,7 @@ class CheckOutModal extends React.Component {
       fetch(Url, requestMetadata)
         .then((res) => res.json())
         .then((res) => {
+          console.log(res);
           this.setState({
             addNewAddress: false,
             continueBtn: false,
@@ -593,7 +596,7 @@ class CheckOutModal extends React.Component {
           this.disableMessage();
         });
     }
-    if (currentPage == "address" && e.target.name == "save") {
+    if (currentPage == "address" && targetName == "save") {
       const Url = `${baseURL}updateAddress${app_key}`;
       this.setState({showLoader:true});
       const postBody = {
@@ -634,7 +637,7 @@ class CheckOutModal extends React.Component {
           this.disableMessage();
         });
     }
-    if (currentPage == "address" && e.target.name == "continue") {
+    if (currentPage == "address" && targetName == "continue") {
       this.setState({
         currentPage: "pay",
         stepAddressVerification: true,
@@ -886,7 +889,8 @@ class CheckOutModal extends React.Component {
               currentPage: "address",
               stepMobileVerification: true,
               defaultAddress: defaultAddress,
-              showLoader:false
+              showLoader:false,
+              currentDefaultAddress:false
               
             });
           else {
@@ -966,6 +970,7 @@ class CheckOutModal extends React.Component {
 if(window.innerWidth < 767){
    mobileView=true;
 }
+console.log(addNewAddress,defaultAddress);
     return (
      
       <div>
@@ -1918,7 +1923,7 @@ if(window.innerWidth < 767){
                       ? "save"
                       : "continue"
                   }
-                  onClick={(e) => this.handleContinue(e)}
+                  onClick={(e) => addNewAddress ? this.handleContinue(e,"addNewAddress"): editAddress ? this.handleContinue(e,"save"):this.handleContinue(e,"continue")}
                   style={
                     currentPage == "pay"
                       ? { visibility: "hidden" }
@@ -2601,7 +2606,7 @@ if(window.innerWidth < 767){
                           
                           <div className="line-inputs">
                             <div className="form" style={{marginTop:'10px'}}>
-                              <input type="checkbox" className="input-default-checkbox"  name="default_address" style={{width:'20px', height:'20px'}} checked={currentDefaultAddress} onChange={ (e)=>showDefaultCheckBox ? this.handleDefaultAddress(e):''}/>
+                              <input type="checkbox" className="input-default-checkbox"  name="default_address" style={{width:'20px', height:'20px'}} checked={defaultAddress[0] ? currentDefaultAddress: true} onChange={ (e)=>showDefaultCheckBox ? this.handleDefaultAddress(e):''}/>
                               <label for="default_address" style={{color:'grey', padding:'5px', fontSize:'18px'}}>Make this default address</label>
                             </div>
                           </div>
@@ -2798,7 +2803,7 @@ if(window.innerWidth < 767){
                       ? "save"
                       : "continue"
                   }
-                  onClick={(e) => this.handleContinue(e)}
+                  onClick={(e) => addNewAddress ? this.handleContinue(e,"addNewAddress"): editAddress ? this.handleContinue(e,"save"):this.handleContinue(e,"continue")}
                   style={
                     currentPage == "pay"
                       ? { visibility: "hidden" }
